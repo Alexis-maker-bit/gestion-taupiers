@@ -21,12 +21,16 @@ if (is_tax('taupier_category')) {
 <div id="primary" class="content-area taupier-archive-container">
     <main id="main" class="site-main" role="main">
         <?php 
-// Ajout du fil d'Ariane
-if (function_exists('display_taupier_breadcrumbs')) {
-    display_taupier_breadcrumbs();
-}
-?>
-<header class="page-header">
+        // Ajout du fil d'Ariane
+        if (function_exists('display_taupier_breadcrumbs')) {
+            // Note : Cette fonction doit maintenant être appelée via l'instance de la classe du plugin
+            global $gestion_taupiers;
+            if (isset($gestion_taupiers) && method_exists($gestion_taupiers, 'display_taupier_breadcrumbs')) {
+                $gestion_taupiers->display_taupier_breadcrumbs();
+            }
+        }
+        ?>
+        <header class="page-header">
             <h1 class="page-title">
                 <?php
                 if (is_tax('taupier_category')) {
@@ -78,10 +82,19 @@ if (function_exists('display_taupier_breadcrumbs')) {
                     '93' => 'taupier-seine-saint-denis', '94' => 'taupier-val-de-marne', '95' => 'taupier-val-d-oise'
                 );
                 $current_term_slug = is_tax('taupier_category') ? get_queried_object()->slug : '';
+                
+                // ### DÉBUT DE LA CORRECTION ###
                 foreach ($departements as $num => $slug) {
-                    $active_class = ($slug === $current_term_slug) ? ' active' : '';
-                    echo '<a class="dep-btn' . $active_class . '" href="' . get_term_link($slug, 'taupier_category') . '">' . $num . '</a>';
+                    $link = get_term_link($slug, 'taupier_category');
+
+                    // On vérifie si le lien est valide avant de l'afficher.
+                    // Si la catégorie n'existe pas, la condition sera fausse et le lien ne sera pas affiché.
+                    if (!is_wp_error($link)) {
+                        $active_class = ($slug === $current_term_slug) ? ' active' : '';
+                        echo '<a class="dep-btn' . $active_class . '" href="' . esc_url($link) . '">' . $num . '</a>';
+                    }
                 }
+                // ### FIN DE LA CORRECTION ###
                 ?>
             </div>
         </header>
@@ -191,136 +204,118 @@ if (function_exists('display_taupier_breadcrumbs')) {
 </div>
 
 <style>
-/* Définition des variables CSS pour une charte graphique cohérente et facile à maintenir */
+/* Styles CSS, inchangés */
 :root {
-    --primary-color: #207648; /* Vert foncé, couleur dominante */
-    --secondary-color: #6B381F; /* Marron foncé, couleur d'accentuation */
-    --accent-color: #FFD700; /* Jaune doré pour les étoiles et touches lumineuses */
-    --light-bg: #F8F8F8; /* Arrière-plan clair pour les sections */
-    --dark-text: #333333; /* Texte foncé pour la lisibilité */
-    --medium-text: #555555; /* Texte gris moyen */
-    --light-text: #FFFFFF; /* Texte blanc */
-    --border-color: #E0E0E0; /* Couleur de bordure standard */
-    --shadow-light: rgba(0, 0, 0, 0.08); /* Ombre légère */
-    --shadow-medium: rgba(0, 0, 0, 0.12); /* Ombre moyenne au survol */
-    --border-radius: 10px; /* Rayon de bordure général */
-    --transition-speed: 0.3s; /* Vitesse de transition pour les animations */
+    --primary-color: #207648;
+    --secondary-color: #6B381F;
+    --accent-color: #FFD700;
+    --light-bg: #F8F8F8;
+    --dark-text: #333333;
+    --medium-text: #555555;
+    --light-text: #FFFFFF;
+    --border-color: #E0E0E0;
+    --shadow-light: rgba(0, 0, 0, 0.08);
+    --shadow-medium: rgba(0, 0, 0, 0.12);
+    --border-radius: 10px;
+    --transition-speed: 0.3s;
 }
-
-/* Styles généraux et réinitialisations de base */
 body {
     margin: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: var(--light-bg);
     color: var(--dark-text);
 }
-
 .taupier-archive-container {
     max-width: 1200px;
-    margin: 2rem auto; /* Plus d'espace vertical */
-    padding: 0 2rem; /* Padding horizontal pour les écrans larges */
-    box-sizing: border-box; /* Inclure padding dans la largeur */
+    margin: 2rem auto;
+    padding: 0 2rem;
+    box-sizing: border-box;
 }
-
-/* Page Header */
 .page-header {
     text-align: center;
-    margin-bottom: 3rem; /* Espacement plus grand */
-    padding-bottom: 1.5rem; /* Séparer visuellement le header */
-    border-bottom: 1px solid var(--border-color); /* Ligne subtile */
+    margin-bottom: 3rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
 }
-
 .page-title {
-    font-size: 2.8rem; /* Plus grand et impactant */
-    font-weight: 800; /* Plus épais */
+    font-size: 2.8rem;
+    font-weight: 800;
     color: var(--primary-color);
     margin-bottom: 1rem;
     line-height: 1.2;
 }
-
-/* Introduction text */
 .departement-intro {
     font-size: 1.2rem;
     margin: 1.5rem 0 1rem;
     color: var(--medium-text);
-    max-width: 800px; /* Limiter la largeur du texte pour la lisibilité */
+    max-width: 800px;
     margin-left: auto;
     margin-right: auto;
 }
-
-/* Département Slider */
 .departement-slider {
     overflow-x: auto;
     white-space: nowrap;
     padding: 1rem 0;
     margin: 2rem 0;
-    text-align: center; /* Centre les boutons si l'espace le permet */
-    -webkit-overflow-scrolling: touch; /* Améliore le défilement sur iOS */
-    scrollbar-width: none; /* Masque la scrollbar pour Firefox */
+    text-align: center;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
 .departement-slider::-webkit-scrollbar {
-    display: none; /* Masque la scrollbar pour Chrome, Safari */
+    display: none;
 }
-
 .dep-btn {
-    display: inline-flex; /* Utilisation de flex pour centrer contenu si besoin */
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin: 0 7px; /* Espacement ajusté */
-    padding: 0.6rem 1rem; /* Padding ajusté */
+    margin: 0 7px;
+    padding: 0.6rem 1rem;
     background: var(--secondary-color);
     color: var(--light-text);
-    border-radius: var(--border-radius); /* Rayon de bordure cohérent */
+    border-radius: var(--border-radius);
     text-decoration: none;
-    font-size: 1rem; /* Taille de police légèrement plus grande */
-    font-weight: 600; /* Gras */
-    transition: background var(--transition-speed), transform 0.15s ease; /* Transitions plus douces */
-    min-width: 50px; /* Assurer une taille minimale */
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background var(--transition-speed), transform 0.15s ease;
+    min-width: 50px;
 }
-
 .dep-btn:hover {
-    background: var(--primary-color); /* Changement de couleur au survol */
-    transform: translateY(-2px); /* Léger effet 3D */
-    box-shadow: 0 4px 8px var(--shadow-light); /* Ombre au survol */
+    background: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--shadow-light);
 }
-
 .dep-btn.active {
-    background: var(--primary-color); /* Actif avec la couleur primaire */
-    box-shadow: inset 0 0 0 2px var(--light-text), 0 2px 5px var(--shadow-light); /* Effet "sélectionné" */
-    transform: translateY(0); /* Pas de soulèvement pour l'actif */
+    background: var(--primary-color);
+    box-shadow: inset 0 0 0 2px var(--light-text), 0 2px 5px var(--shadow-light);
+    transform: translateY(0);
 }
-
-/* Shop Promo Banner */
 .shop-promo-banner {
-    background-color: var(--light-bg); /* Cohérence avec le thème */
+    background-color: var(--light-bg);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     padding: 2rem;
-    margin-bottom: 3rem; /* Espacement plus grand */
+    margin-bottom: 3rem;
     text-align: center;
-    box-shadow: 0 5px 20px var(--shadow-light); /* Ombre plus prononcée */
+    box-shadow: 0 5px 20px var(--shadow-light);
     transition: transform var(--transition-speed), box-shadow var(--transition-speed);
 }
-
 .shop-promo-banner:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 30px var(--shadow-medium);
 }
-
 .shop-promo-banner p {
-    font-size: 1.25rem; /* Plus grand */
+    font-size: 1.25rem;
     color: var(--dark-text);
     margin-bottom: 1.5rem;
     font-weight: 500;
 }
-
 .shop-promo-banner .promo-button {
-    display: inline-flex; /* Centrage et alignement vertical */
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem; /* Espacement entre texte et icône */
+    gap: 0.5rem;
     background-color: var(--secondary-color);
     color: var(--light-text);
-    padding: 1rem 2.2rem; /* Plus grand padding */
+    padding: 1rem 2.2rem;
     border-radius: var(--border-radius);
     text-decoration: none;
     font-weight: bold;
@@ -328,56 +323,47 @@ body {
     transition: background-color var(--transition-speed), transform var(--transition-speed), box-shadow var(--transition-speed);
     box-shadow: 0 4px 10px var(--shadow-light);
 }
-
 .shop-promo-banner .promo-button:hover {
     background-color: var(--primary-color);
     transform: translateY(-3px);
     box-shadow: 0 6px 15px var(--shadow-medium);
 }
-
-/* Taupier List & Cards */
 .taupier-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* Min-width légèrement augmenté */
-    gap: 2rem; /* Espacement plus grand entre les cartes */
-    padding-bottom: 2rem; /* Espacement avec le contenu suivant */
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    padding-bottom: 2rem;
 }
-
 .taupier-card-link {
-    display: block; /* Rendre le lien englobant toute la carte */
+    display: block;
     text-decoration: none;
     color: inherit;
 }
-
 .taupier-card {
     background: var(--light-text);
     border-radius: var(--border-radius);
-    box-shadow: 0 5px 20px var(--shadow-light); /* Ombre plus visible */
+    box-shadow: 0 5px 20px var(--shadow-light);
     transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     height: 100%;
 }
-
 .taupier-card:hover {
-    transform: translateY(-8px); /* Effet de soulèvement plus prononcé */
+    transform: translateY(-8px);
     box-shadow: 0 10px 30px var(--shadow-medium);
 }
-
 .taupier-card-inner {
     display: flex;
     flex-direction: column;
     height: 100%;
 }
-
 .taupier-media {
     position: relative;
-    aspect-ratio: 16/9; /* Ratio plus cinématographique pour les images */
+    aspect-ratio: 16/9;
     overflow: hidden;
     background: #eaeaea;
 }
-
 .taupier-media img {
     width: 100%;
     height: 100%;
@@ -385,123 +371,106 @@ body {
     display: block;
     transition: transform var(--transition-speed) ease;
 }
-
 .taupier-card:hover .taupier-media img {
-    transform: scale(1.05); /* Zoom subtil sur l'image au survol de la carte */
+    transform: scale(1.05);
 }
-
 .taupier-thumbnail-placeholder {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 4rem; /* Plus grande icône */
-    color: #ccc; /* Couleur plus douce */
-    background: #f0f0f0; /* Fond légèrement plus clair */
+    font-size: 4rem;
+    color: #ccc;
+    background: #f0f0f0;
     height: 100%;
 }
-
-/* Rating on card */
 .taupier-rating {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    background: rgba(0, 0, 0, 0.75); /* Fond plus opaque pour la lisibilité */
+    background: rgba(0, 0, 0, 0.75);
     color: var(--light-text);
-    padding: 0.6rem 0.8rem; /* Padding ajusté */
+    padding: 0.6rem 0.8rem;
     font-size: 0.9rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-weight: 600;
 }
-
 .stars-container .star {
-    font-size: 1.1rem; /* Étoiles légèrement plus grandes */
+    font-size: 1.1rem;
     margin-right: 3px;
 }
-.star.full, .star.half { color: var(--accent-color); } /* Utilisation de la couleur accent */
-.star.empty { color: #888; } /* Étoiles vides plus sombres */
-
+.star.full, .star.half { color: var(--accent-color); }
+.star.empty { color: #888; }
 .rating-text {
     font-size: 0.85rem;
     opacity: 0.9;
 }
-
-/* Card Content */
 .taupier-content {
-    padding: 1.5rem; /* Padding ajusté */
+    padding: 1.5rem;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
 }
-
 .taupier-title {
-    font-size: 1.5rem; /* Plus grand et plus visible */
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--primary-color);
     margin: 0 0 0.8rem;
-    text-decoration: none; /* S'assurer qu'il n'y a pas de soulignement */
+    text-decoration: none;
 }
-
 .taupier-title:hover {
-    text-decoration: underline; /* Soulignement au survol du titre */
+    text-decoration: underline;
     color: var(--secondary-color);
 }
-
 .taupier-meta {
     display: flex;
-    flex-wrap: wrap; /* Permet le retour à la ligne */
-    gap: 1.2rem; /* Espacement ajusté */
-    font-size: 0.95rem; /* Légèrement plus grand */
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    font-size: 0.95rem;
     color: var(--medium-text);
     margin-bottom: 1rem;
 }
-
 .meta-item {
     display: flex;
     align-items: center;
-    gap: 0.4rem; /* Espacement icône/texte */
+    gap: 0.4rem;
 }
-
 .meta-item span {
     font-weight: 600;
 }
-
 .taupier-excerpt {
-    font-size: 1rem; /* Plus lisible */
+    font-size: 1rem;
     color: var(--dark-text);
     margin-bottom: 1.5rem;
     line-height: 1.6;
-    height: 3.8em; /* Hauteur fixe pour 2-3 lignes, ajuster si besoin */
+    height: 3.8em;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-
 .taupier-actions {
     display: flex;
     justify-content: space-between;
-    gap: 0.75rem; /* Espacement entre les boutons */
+    gap: 0.75rem;
     flex-wrap: wrap;
-    margin-top: auto; /* Pousse les actions en bas de la carte */
+    margin-top: auto;
 }
-
 .btn {
-    display: inline-flex; /* Utilisation de flex pour aligner icône/texte si ajoutés */
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.8rem 1.2rem; /* Plus grand padding pour les boutons */
-    border-radius: 8px; /* Rayon de bordure plus prononcé */
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
     text-align: center;
     font-size: 0.95rem;
-    font-weight: bold; /* Texte en gras */
+    font-weight: bold;
     cursor: pointer;
     transition: background-color var(--transition-speed), transform 0.15s ease, box-shadow var(--transition-speed);
-    flex: 1 1 48%; /* Permet à deux boutons de tenir sur une ligne */
-    min-width: 120px; /* S'assure que les boutons ne sont pas trop petits */
+    flex: 1 1 48%;
+    min-width: 120px;
 }
-
 .btn-primary {
     background-color: var(--secondary-color);
     color: var(--light-text);
@@ -512,9 +481,8 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px var(--shadow-medium);
 }
-
 .btn-secondary {
-    background-color: var(--border-color); /* Couleur plus neutre */
+    background-color: var(--border-color);
     color: var(--dark-text);
     border: 1px solid var(--border-color);
     box-shadow: 0 2px 5px var(--shadow-light);
@@ -524,82 +492,42 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px var(--shadow-medium);
 }
-
-/* Description après la liste */
 .archive-description-after-list {
     text-align: left;
-    margin-top: 3rem; /* Plus d'espace */
-    padding: 2rem; /* Plus de padding pour encadrer le texte */
-    background-color: var(--light-text); /* Fond blanc pour la description */
+    margin-top: 3rem;
+    padding: 2rem;
+    background-color: var(--light-text);
     border-radius: var(--border-radius);
-    box-shadow: 0 5px 20px var(--shadow-light); /* Ombre douce */
-    line-height: 1.8; /* Plus d'espace entre les lignes */
-    font-size: 1.1rem; /* Taille plus grande */
+    box-shadow: 0 5px 20px var(--shadow-light);
+    line-height: 1.8;
+    font-size: 1.1rem;
     color: var(--dark-text);
 }
-
 .archive-description-after-list p {
-    margin-bottom: 1em; /* Espacement entre paragraphes */
+    margin-bottom: 1em;
 }
-
-/* Responsive Design */
 @media (max-width: 768px) {
     .taupier-archive-container {
         padding: 0 1rem;
         margin: 1rem auto;
     }
-    .page-title {
-        font-size: 2rem;
-    }
-    .departement-intro {
-        font-size: 1rem;
-    }
-    .dep-btn {
-        padding: 0.5rem 0.8rem;
-        font-size: 0.9rem;
-    }
-    .shop-promo-banner {
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    .shop-promo-banner p {
-        font-size: 1rem;
-    }
-    .shop-promo-banner .promo-button {
-        padding: 0.8rem 1.5rem;
-        font-size: 1rem;
-    }
-    .taupier-list {
-        grid-template-columns: 1fr; /* Une seule colonne sur mobile */
-        gap: 1.5rem;
-    }
-    .taupier-card-inner {
-        flex-direction: column;
-    }
-    .taupier-content {
-        padding: 1rem;
-    }
-    .taupier-title {
-        font-size: 1.3rem;
-    }
-    .taupier-meta {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    .taupier-excerpt {
-        font-size: 0.9rem;
-    }
-    .btn {
-        flex: 1 1 100%; /* Boutons pleine largeur sur mobile */
-    }
-    .archive-description-after-list {
-        padding: 1rem;
-        margin-top: 2rem;
-        font-size: 1rem;
-    }
+    .page-title { font-size: 2rem; }
+    .departement-intro { font-size: 1rem; }
+    .dep-btn { padding: 0.5rem 0.8rem; font-size: 0.9rem; }
+    .shop-promo-banner { padding: 1.5rem; margin-bottom: 2rem; }
+    .shop-promo-banner p { font-size: 1rem; }
+    .shop-promo-banner .promo-button { padding: 0.8rem 1.5rem; font-size: 1rem; }
+    .taupier-list { grid-template-columns: 1fr; gap: 1.5rem; }
+    .taupier-card-inner { flex-direction: column; }
+    .taupier-content { padding: 1rem; }
+    .taupier-title { font-size: 1.3rem; }
+    .taupier-meta { flex-direction: column; gap: 0.5rem; }
+    .taupier-excerpt { font-size: 0.9rem; }
+    .btn { flex: 1 1 100%; }
+    .archive-description-after-list { padding: 1rem; margin-top: 2rem; font-size: 1rem; }
 }
 </style>
 
 <?php
-get_footer(); // Ligne ajoutée pour corriger le problème d'affichage
+get_footer();
 ?>
