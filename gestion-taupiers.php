@@ -569,16 +569,43 @@ class Gestion_Taupiers {
      * Ajoute les styles CSS
      */
     public function enqueue_styles() {
-        // Enqueue styles globally as shortcodes or archive pages can appear anywhere.
-        wp_enqueue_style('taupier-styles', plugins_url('taupier-styles.css', __FILE__));
+        // Chargement des styles de la librairie Swiper
+        wp_enqueue_style(
+            'swiper-bundle-css',
+            plugins_url('assets/css/vendor/swiper-bundle.min.css', __FILE__)
+        );
+
+        // Chargement de vos styles personnalisés (en les rendant dépendants de Swiper)
+        wp_enqueue_style(
+            'taupier-styles',
+            plugins_url('taupier-styles.css', __FILE__),
+            array('swiper-bundle-css') // Dépendance
+        );
     }
 
-    /**
+   /**
      * Ajoute les scripts JavaScript
      */
     public function enqueue_scripts() {
-        // Enqueue scripts globally as shortcodes or review forms can appear anywhere.
-        wp_enqueue_script('taupier-scripts', plugins_url('taupier-scripts.js', __FILE__), array('jquery'), '1.0', true);
+        // Chargement de la librairie Swiper JS
+        wp_enqueue_script(
+            'swiper-bundle-js',
+            plugins_url('assets/js/vendor/swiper-bundle.min.js', __FILE__),
+            array(), // Aucune dépendance
+            '11.2.8', // La version de Swiper, bonne pratique
+            true      // Charger dans le pied de page
+        );
+
+        // Chargement de votre script d'initialisation
+        wp_enqueue_script(
+            'taupier-scripts',
+            plugins_url('taupier-scripts.js', __FILE__),
+            array('jquery', 'swiper-bundle-js'), // Dépend de jQuery et de Swiper
+            '1.0',
+            true
+        );
+
+        // Localisation pour AJAX (inchangé)
         wp_localize_script('taupier-scripts', 'taupier_ajax', array(
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('taupier_review_nonce')
