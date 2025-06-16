@@ -2445,6 +2445,9 @@ require_once plugin_dir_path(__FILE__) . 'taupier-search.php';
 /**
  * Affiche un fil d'Ariane avec données structurées JSON-LD.
  */
+/**
+ * Affiche un fil d'Ariane avec données structurées JSON-LD.
+ */
 function display_taupier_breadcrumbs() {
     // Ne pas afficher sur la page d'accueil
     if (is_front_page()) {
