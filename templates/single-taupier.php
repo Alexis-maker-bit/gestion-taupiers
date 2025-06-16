@@ -252,7 +252,7 @@ function taupier_display_stars($average_rating, $schema_org = false) {
 
 
                         if (!empty($effective_gallery_ids)) : ?>
-                            <div class="swiper gallery-slider-container"> {/* Ajout de la classe swiper ici */}
+                            <div class="swiper gallery-slider-container"> 
                                 <div class="swiper-wrapper gallery-slider-wrapper">
                                     <?php foreach ($effective_gallery_ids as $index => $image_id) :
                                         $image_medium_large = wp_get_attachment_image_src($image_id, 'medium_large');
